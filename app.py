@@ -41,8 +41,9 @@ class RetrievedChunk(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    answer: str
-    retrieved_chunks: list[RetrievedChunk]
+    query: str
+    final_answer: str
+    retrieved_context_chunks: list[RetrievedChunk]
     confidence_score: float
 
 
@@ -76,8 +77,9 @@ def chat(request: ChatRequest):
         )
 
         return {
-            "answer": result["answer"],
-            "retrieved_chunks": result["context"],
+            "query": request.question,
+            "final_answer": result["answer"],
+            "retrieved_context_chunks": result["context"],
             "confidence_score": result["score"],
         }
 

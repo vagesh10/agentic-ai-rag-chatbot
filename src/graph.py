@@ -163,19 +163,19 @@ retrieved context provided below.
 
 STRICT RULES:
 
-1. Use only information contained in the retrieved context.
-2. Do not use your own general knowledge.
-3. Do not invent or assume facts.
-4. Do not add information that is not supported by the context.
-5. If the context does not contain enough information to
-   answer the question, say:
-
-"I don't have enough information in the provided document
-to answer that question."
-
-6. Give a concise and clear answer.
-7. Do not mention the retrieval process unless necessary.
-
+1. Use only the retrieved context.
+2. Do not use general knowledge.
+3. Do not invent information.
+4. Do not state facts that are not supported by the context.
+5. If the context is insufficient, return exactly:
+   "I don't have enough information in the provided document to answer that question."
+6. Keep the answer concise.
+7. Do not mention the retrieval process.
+8. If the user's wording differs slightly from the terminology used
+   in the retrieved context, use the closest clearly supported concept
+   from the context. Answer the underlying question when the retrieved
+   context directly supports it. Do not use outside knowledge.
+   
 RETRIEVED CONTEXT:
 
 {formatted_context}
