@@ -7,7 +7,7 @@ The chatbot uses the Agentic AI ebook as its knowledge source and answers questi
 ## 🚀 Live Demo
 
 **Streamlit App:**  
-https://agentic-ai-rag-chatbot-a2j4fnxdrwjwxwvw3abrue.streamlit.app/
+https://agentic-ai-rag-chatbot-bpxbvewfsanjuncjsglamo.streamlit.app/
 
 ## ✨ Features
 
