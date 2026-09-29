@@ -1,0 +1,11 @@
+langchain==0.3.27
+langgraph==0.6.8
+langchain-openai==0.3.33
+langchain-community==0.3.31
+langchain-pinecone==0.2.12
+pinecone-client==6.0.0
+pypdf==6.1.0
+fastapi==0.116.2
+uvicorn==0.35.0
+python-dotenv==1.1.1
+streamlit==1.50.0
