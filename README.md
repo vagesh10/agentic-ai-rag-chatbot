@@ -1,89 +1,49 @@
 # Agentic AI RAG Chatbot
 
-A document-grounded Retrieval-Augmented Generation (RAG) chatbot built using Python, LangGraph, Pinecone, Gemini, and FastAPI.
+A document-grounded Retrieval-Augmented Generation (RAG) chatbot built using Python, LangGraph, Pinecone, Google Gemini, FastAPI, and Streamlit.
 
-The chatbot uses the Agentic AI eBook as its knowledge source and answers questions only from retrieved document context.
+The chatbot uses the Agentic AI ebook as its knowledge source and answers questions only from retrieved document context.
 
 ## Features
 
 - PDF document ingestion
 - Text chunking with overlapping chunks
-- Gemini embeddings
-- Pinecone vector database
-- Semantic similarity search
+- Gemini-based text embeddings
+- Pinecone vector storage and similarity search
 - LangGraph-based RAG workflow
-- Grounded Gemini responses
-- Out-of-context question refusal
-- Retrieval relevance/confidence score
+- Strict document-grounded generation
+- Relevance threshold for out-of-context questions
+- Gemini-powered answer generation
 - FastAPI REST API
-- Swagger API documentation
+- Streamlit chat interface
+- Retrieved source chunks displayed in the UI
+- Retrieval similarity score
+- Out-of-context question handling
 
-## Architecture
+## Tech Stack
+
+- Python 3.11
+- LangChain
+- LangGraph
+- Pinecone
+- Google Gemini API
+- FastAPI
+- Streamlit
+- PyPDF
+- python-dotenv
+
+## Models
+
+### Embedding Model
 
 ```text
-Agentic AI PDF
-      |
-      v
-PDF Loader
-      |
-      v
-Text Chunking
-      |
-      v
-Gemini Embeddings
-      |
-      v
-Pinecone Vector Database
-      |
-      v
-User Question
-      |
-      v
-LangGraph
-      |
-      +------> Retrieve relevant chunks
-      |
-      v
-Relevance Threshold
-      |
-      +------> Insufficient context
-      |              |
-      |              v
-      |         Refusal response
-      |
-      v
-Gemini Generation
-      |
-      v
-Final Answer + Retrieved Chunks + Score
-      |
-      v
-FastAPI
-Technology Stack
-Python 3.11
-LangChain
-LangGraph
-Pinecone
-Google Gemini API
-FastAPI
-Uvicorn
-PyPDF
-python-dotenv
-Models
-Embedding Model
-
-The project uses:
-
 gemini-embedding-2
 
 Embedding dimension:
 
 1536
 Generation Model
-
-The project uses:
-
-gemini-3.8-flash
+gemini-2.5-flash
 Project Structure
 rag-agentic-ai/
 │
@@ -98,82 +58,167 @@ rag-agentic-ai/
 │   └── ingestion.py
 │
 ├── app.py
+├── frontend.py
 ├── tests_sample_queries.py
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
 └── README.md
-Setup
-1. Clone the Repository
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd rag-agentic-ai
-2. Create a Virtual Environment
-python -m venv venv
+RAG Architecture
 
-On Windows:
+The application follows this workflow:
 
-venv\Scripts\Activate.ps1
-3. Install Dependencies
-pip install -r requirements.txt
-4. Configure Environment Variables
+User Question
+      │
+      ▼
+Streamlit Frontend
+      │
+      ▼
+FastAPI /chat
+      │
+      ▼
+LangGraph
+      │
+      ▼
+Retrieve from Pinecone
+      │
+      ▼
+Relevant Document Chunks
+      │
+      ▼
+Relevance Check
+      │
+      ├── Low relevance
+      │       ↓
+      │   Refuse to answer
+      │
+      └── Relevant
+              ↓
+        Gemini Generation
+              │
+              ▼
+          Final Answer
+LangGraph Workflow
 
-Create a .env file in the project root.
+The LangGraph workflow contains two main nodes:
 
-Use .env.example as the template:
+START
+  ↓
+Retrieve
+  ↓
+Generate
+  ↓
+END
+Retrieve Node
 
-OPENAI_API_KEY=your_openai_api_key_here
-PINECONE_API_KEY=your_pinecone_api_key_here
-PINECONE_INDEX_NAME=agentic-ai-gemini
-GEMINI_API_KEY=your_gemini_api_key_here
+The retrieve node:
 
-Do not commit .env or API keys to GitHub.
+Receives the user's question.
+Searches the Pinecone vector index.
+Retrieves the top 4 relevant chunks.
+Calculates the highest similarity score.
+Passes the retrieved context to the generation node.
+Generate Node
 
-Pinecone Index
+The generate node:
 
-The project uses a Pinecone dense vector index with:
+Checks the retrieval similarity score.
+Rejects questions below the relevance threshold.
+Sends only the retrieved document context to Gemini.
+Generates an answer using the supplied context.
+Does not use outside knowledge.
 
-Index name: agentic-ai-gemini
+The current relevance threshold is:
+
+0.70
+Pinecone Configuration
+
+The project uses the following Pinecone index configuration:
+
+Index Name: agentic-ai-gemini
 Dimension: 1536
 Metric: cosine
+Data Ingestion
 
-The index can be created using:
+The Agentic AI ebook is loaded using PyPDF and split into overlapping chunks.
 
-python -m src.create_pinecone_index
-Document Ingestion
+Configuration:
 
-Place the Agentic AI eBook at:
+Chunk Size: 1000
+Chunk Overlap: 200
 
-data/Ebook-Agentic-AI.pdf
+The ingestion process:
 
-Run the ingestion pipeline:
+PDF
+ ↓
+PyPDFLoader
+ ↓
+Text Splitting
+ ↓
+Gemini Embeddings
+ ↓
+1536-dimensional vectors
+ ↓
+Pinecone
+
+To run ingestion:
 
 python -m src.ingestion
 
-The ingestion pipeline performs the following steps:
+The completed ingestion produced:
 
-Loads the PDF.
-Splits the document into overlapping chunks.
-Generates Gemini embeddings.
-Stores vectors and metadata in Pinecone.
+60 pages
+119 chunks
+119 embeddings
+1536 dimensions
+Environment Variables
 
-The current ingestion run processed:
+Create a .env file in the project root:
 
-Pages: 60
-Chunks: 119
-Embedding dimension: 1536
-Run the API
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_NAME=agentic-ai-gemini
+GEMINI_API_KEY=your_gemini_api_key
 
-Start the FastAPI server:
+Never commit the .env file or API keys to GitHub.
+
+Installation
+
+Create and activate a virtual environment:
+
+py -3.11 -m venv venv
+.\venv\Scripts\Activate.ps1
+
+Install dependencies:
+
+pip install -r requirements.txt
+
+Verify dependencies:
+
+pip check
+Running the Backend
+
+Start FastAPI:
 
 uvicorn app:app --reload
 
-The API will be available at:
+The API will run at:
 
 http://127.0.0.1:8000
 
-Swagger API documentation:
+FastAPI documentation:
 
 http://127.0.0.1:8000/docs
+Running the Frontend
+
+Open a second terminal and activate the virtual environment:
+
+.\venv\Scripts\Activate.ps1
+
+Start Streamlit:
+
+streamlit run frontend.py
+
+The Streamlit application will open in the browser.
 
 API Endpoint
 POST /chat
@@ -187,76 +232,16 @@ Request:
 Response:
 
 {
-  "answer": "Based on the provided document, Agentic AI refers to...",
-  "retrieved_chunks": [
-    {
-      "content": "...",
-      "metadata": {
-        "page": 17
-      },
-      "score": 0.80
-    }
-  ],
-  "confidence_score": 0.80
+  "answer": "Agentic AI refers to systems capable of autonomous decision-making and action in pursuit of specific objectives.",
+  "retrieved_chunks": [],
+  "confidence_score": 0.8495
 }
 
-The confidence_score represents the highest retrieval similarity score returned for the question.
+The actual response contains the retrieved document chunks.
 
-RAG Workflow
+Sample Queries
 
-The LangGraph workflow consists of two main nodes:
-
-START
-  |
-  v
-Retrieve
-  |
-  v
-Generate
-  |
-  v
-END
-Retrieve Node
-
-The retrieve node:
-
-Converts the user question into an embedding.
-Searches the Pinecone vector database.
-Retrieves the top relevant document chunks.
-Calculates similarity scores.
-Generate Node
-
-The generate node:
-
-Checks the retrieval relevance threshold.
-Rejects insufficient context.
-Passes the retrieved chunks to Gemini.
-Instructs Gemini to answer only using the supplied document context.
-Grounding and Out-of-Context Handling
-
-The chatbot is designed to answer questions only from the Agentic AI eBook.
-
-A relevance threshold is used before generation.
-
-If the retrieved context does not meet the configured threshold, the chatbot refuses to answer instead of relying on outside knowledge.
-
-Example:
-
-Question:
-Who won the 2022 FIFA World Cup?
-
-Response:
-I don't have enough information in the provided document to answer that question.
-
-This provides a safeguard against answering questions that are outside the knowledge contained in the document.
-
-Sample Tests
-
-The project includes six sample queries in:
-
-tests_sample_queries.py
-
-The queries are:
+The project was tested using the following queries:
 
 What is Agentic AI?
 What is the role of memory in Agentic AI?
@@ -264,63 +249,61 @@ What are the main components of an Agentic AI system?
 How is Agentic AI different from traditional automation?
 Who won the 2022 FIFA World Cup?
 What is the role of planning in Agentic AI?
+Validation
+In-Context Query
 
-The fifth query is an out-of-context test and verifies that the chatbot refuses to provide an unsupported answer.
+Question:
 
-Validation Results
+What is Agentic AI?
 
-The RAG pipeline was tested through the FastAPI /chat endpoint.
+Result:
 
-Test	Result
-Agentic AI definition	Passed
-Role of memory	Passed
-Main components of Agentic AI	Passed
-Agentic AI vs traditional automation	Passed
-Out-of-context FIFA question	Correctly refused
-Role of planning	Passed
-RAG Components
-1. Document Loading
+Grounded answer generated successfully
+Similarity score: 0.8495
+Memory Query
 
-The Agentic AI eBook is loaded from the data/ directory using a PDF loader.
+Question:
 
-2. Chunking
+What is the role of memory in Agentic AI?
 
-The document is split into smaller overlapping chunks so that relevant sections can be retrieved efficiently.
+Result:
 
-3. Embeddings
+Grounded answer generated successfully
+Similarity score: 0.7869
+Out-of-Context Query
 
-Each document chunk is converted into a vector representation using Gemini embeddings.
+Question:
 
-4. Vector Storage
+Who won the 2022 FIFA World Cup?
 
-The embeddings and document metadata are stored in Pinecone.
+Result:
 
-5. Retrieval
+I don't have enough information in the provided document to answer that question.
 
-When a user asks a question, the question is embedded and compared against the vectors stored in Pinecone.
+Similarity score:
 
-The most relevant chunks are retrieved.
+0.5276
 
-6. Generation
+Because the score is below the 0.70 threshold, the system refuses to generate an answer from outside knowledge.
 
-The retrieved context is passed to Gemini through the LangGraph generation node.
+Output
 
-The generation prompt explicitly instructs the model to use only the retrieved document context.
-
-7. API
-
-FastAPI exposes the RAG workflow through the /chat endpoint.
-
-The API returns:
+The application provides:
 
 Final answer
-Retrieved chunks
-Retrieval score
+Retrieved document chunks
+Source page information
+Individual chunk similarity scores
+Overall retrieval similarity score
 Security
 
-API keys are stored in the local .env file.
+API keys are loaded through environment variables.
 
 The .env file is excluded from Git using .gitignore.
+
+Example environment configuration is provided in:
+
+.env.example
 
 Never commit real API keys to the repository.
 
@@ -328,24 +311,6 @@ Assignment Context
 
 This project was developed as part of a technical recruitment assignment for a Data Engineering role.
 
-The implementation demonstrates:
-
-Data ingestion
-PDF processing
-Text chunking
-Embedding generation
-Vector database indexing
-Semantic retrieval
-LangGraph orchestration
-Grounded LLM generation
-Out-of-context handling
-REST API development
-
-
 License
 
 This project was created as part of a technical recruitment assignment.
-
-
-
-
