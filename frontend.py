@@ -1,8 +1,6 @@
-import requests
 import streamlit as st
 
-
-API_URL = "http://127.0.0.1:8000/chat"
+from src.graph import ask_question
 
 
 st.set_page_config(
@@ -11,8 +9,8 @@ st.set_page_config(
     layout="wide",
 )
 
-
 st.title("🤖 Agentic AI RAG Chatbot")
+
 st.caption(
     "Ask questions about the Agentic AI ebook. "
     "Answers are grounded only in the retrieved document context."
@@ -23,10 +21,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# ---------------------------------------------------------
-# DISPLAY CHAT HISTORY
-# ---------------------------------------------------------
-
+# Display chat history
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
@@ -47,7 +42,7 @@ for message in st.session_state.messages:
             if chunks:
 
                 with st.expander(
-                    f"View {len(chunks)} retrieved document chunks"
+                    f"📚 View {len(chunks)} Retrieved Sources"
                 ):
 
                     for index, chunk in enumerate(
@@ -64,12 +59,10 @@ for message in st.session_state.messages:
                             metadata.get("page", "Unknown"),
                         )
 
-                        st.markdown(
-                            f"**Chunk {index}**"
-                        )
+                        st.markdown(f"**Chunk {index}**")
 
                         st.caption(
-                            f"Page: {page}  •  "
+                            f"Page: {page}  • "
                             f"Similarity: {chunk_score:.4f}"
                         )
 
@@ -79,10 +72,7 @@ for message in st.session_state.messages:
                             st.divider()
 
 
-# ---------------------------------------------------------
-# CHAT INPUT
-# ---------------------------------------------------------
-
+# Chat input
 question = st.chat_input(
     "Ask a question about Agentic AI..."
 )
@@ -90,10 +80,7 @@ question = st.chat_input(
 
 if question:
 
-    # -----------------------------------------------------
-    # USER MESSAGE
-    # -----------------------------------------------------
-
+    # User message
     st.session_state.messages.append(
         {
             "role": "user",
@@ -104,10 +91,8 @@ if question:
     with st.chat_message("user"):
         st.markdown(question)
 
-    # -----------------------------------------------------
-    # ASSISTANT RESPONSE
-    # -----------------------------------------------------
 
+    # Assistant response
     with st.chat_message("assistant"):
 
         with st.spinner(
@@ -116,30 +101,14 @@ if question:
 
             try:
 
-                response = requests.post(
-                    API_URL,
-                    json={"question": question},
-                    timeout=120,
-                )
-
-                response.raise_for_status()
-
-                result = response.json()
+                # Directly run the RAG pipeline
+                result = ask_question(question)
 
                 answer = result["answer"]
-                chunks = result.get(
-                    "retrieved_chunks",
-                    [],
-                )
-                confidence_score = result.get(
-                    "confidence_score",
-                    0,
-                )
+                chunks = result.get("context", [])
+                confidence_score = result.get("score", 0)
 
-                # -----------------------------------------
-                # ANSWER
-                # -----------------------------------------
-
+                # Answer
                 st.markdown(answer)
 
                 st.caption(
@@ -147,14 +116,12 @@ if question:
                     f"{confidence_score:.4f}"
                 )
 
-                # -----------------------------------------
-                # RETRIEVED SOURCES
-                # -----------------------------------------
 
+                # Retrieved sources
                 if chunks:
 
                     with st.expander(
-                        f"View {len(chunks)} retrieved document chunks"
+                        f"📚 View {len(chunks)} Retrieved Sources"
                     ):
 
                         for index, chunk in enumerate(
@@ -190,7 +157,7 @@ if question:
                             )
 
                             st.caption(
-                                f"Page: {page}  •  "
+                                f"Page: {page}  • "
                                 f"Similarity: {chunk_score:.4f}"
                             )
 
@@ -199,10 +166,8 @@ if question:
                             if index < len(chunks):
                                 st.divider()
 
-                # -----------------------------------------
-                # SAVE ASSISTANT MESSAGE
-                # -----------------------------------------
 
+                # Save assistant message
                 st.session_state.messages.append(
                     {
                         "role": "assistant",
@@ -212,22 +177,6 @@ if question:
                     }
                 )
 
-            except requests.exceptions.RequestException:
-
-                error_message = (
-                    "Could not connect to the FastAPI backend. "
-                    "Make sure the backend is running on "
-                    "http://127.0.0.1:8000."
-                )
-
-                st.error(error_message)
-
-                st.session_state.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": error_message,
-                    }
-                )
 
             except Exception as error:
 
