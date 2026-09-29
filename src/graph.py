@@ -14,8 +14,7 @@ from src.ingestion import GeminiEmbeddings
 # =========================================================
 # CONFIGURATION
 # =========================================================
-
-GENERATION_MODEL = "gemini-3.8-flash"
+GENERATION_MODEL = "gemini-2.5-flash"
 
 # Based on the actual scores observed during testing:
 # Relevant query:    0.8495
