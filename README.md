@@ -1,14 +1,13 @@
-## 🚀 Live Demo
-
-**Streamlit App:**  
-https://agentic-ai-rag-chatbot-a2j4fnxdrwjwxwvw3abrue.streamlit.app/
-
-
 # Agentic AI RAG Chatbot
 
 A document-grounded Retrieval-Augmented Generation (RAG) chatbot built using Python, LangGraph, Pinecone, Google Gemini, FastAPI, and Streamlit.
 
 The chatbot uses the Agentic AI ebook as its knowledge source and answers questions only from retrieved document context.
+
+## 🚀 Live Demo
+
+**Streamlit App:**  
+https://agentic-ai-rag-chatbot-a2j4fnxdrwjwxwvw3abrue.streamlit.app/
 
 ## Features
 
@@ -44,10 +43,7 @@ The chatbot uses the Agentic AI ebook as its knowledge source and answers questi
 
 ```text
 gemini-embedding-2
-
-Embedding dimension:
-
-1536
+Embedding dimension: 1536
 Generation Model
 gemini-2.5-flash
 Project Structure
@@ -72,15 +68,12 @@ rag-agentic-ai/
 └── README.md
 RAG Architecture
 
-The application follows this workflow:
+The deployed Streamlit application follows this workflow:
 
 User Question
       │
       ▼
 Streamlit Frontend
-      │
-      ▼
-FastAPI /chat
       │
       ▼
 LangGraph
@@ -104,6 +97,9 @@ Relevance Check
               │
               ▼
           Final Answer
+
+FastAPI is also provided as a separate REST API through app.py.
+
 LangGraph Workflow
 
 The LangGraph workflow contains two main nodes:
@@ -187,6 +183,8 @@ GEMINI_API_KEY=your_gemini_api_key
 
 Never commit the .env file or API keys to GitHub.
 
+For Streamlit Community Cloud, configure these values in the application's Secrets settings.
+
 Installation
 
 Create and activate a virtual environment:
@@ -216,7 +214,7 @@ FastAPI documentation:
 http://127.0.0.1:8000/docs
 Running the Frontend
 
-Open a second terminal and activate the virtual environment:
+Activate the virtual environment:
 
 .\venv\Scripts\Activate.ps1
 
@@ -239,7 +237,13 @@ Response:
 
 {
   "answer": "Agentic AI refers to systems capable of autonomous decision-making and action in pursuit of specific objectives.",
-  "retrieved_chunks": [],
+  "retrieved_chunks": [
+    {
+      "content": "Retrieved document content...",
+      "metadata": {},
+      "score": 0.8495
+    }
+  ],
   "confidence_score": 0.8495
 }
 
@@ -264,8 +268,10 @@ What is Agentic AI?
 
 Result:
 
-Grounded answer generated successfully
+Grounded answer generated successfully.
+
 Similarity score: 0.8495
+
 Memory Query
 
 Question:
@@ -274,8 +280,10 @@ What is the role of memory in Agentic AI?
 
 Result:
 
-Grounded answer generated successfully
+Grounded answer generated successfully.
+
 Similarity score: 0.7869
+
 Out-of-Context Query
 
 Question:
@@ -286,9 +294,7 @@ Result:
 
 I don't have enough information in the provided document to answer that question.
 
-Similarity score:
-
-0.5276
+Similarity score: 0.5276
 
 Because the score is below the 0.70 threshold, the system refuses to generate an answer from outside knowledge.
 
@@ -302,17 +308,10 @@ Source page information
 Individual chunk similarity scores
 Overall retrieval similarity score
 Security
-
 API keys are loaded through environment variables.
-
 The .env file is excluded from Git using .gitignore.
-
-Example environment configuration is provided in:
-
-.env.example
-
-Never commit real API keys to the repository.
-
+Example environment configuration is provided in .env.example.
+Real API keys are never stored in the repository.
 Assignment Context
 
 This project was developed as part of a technical recruitment assignment for a Data Engineering role.
