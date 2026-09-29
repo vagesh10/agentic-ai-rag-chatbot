@@ -1,3 +1,9 @@
+## 🚀 Live Demo
+
+**Streamlit App:**  
+https://agentic-ai-rag-chatbot-a2j4fnxdrwjwxwvw3abrue.streamlit.app/
+
+
 # Agentic AI RAG Chatbot
 
 A document-grounded Retrieval-Augmented Generation (RAG) chatbot built using Python, LangGraph, Pinecone, Google Gemini, FastAPI, and Streamlit.
