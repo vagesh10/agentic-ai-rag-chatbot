@@ -2,30 +2,32 @@
 
 A document-grounded Retrieval-Augmented Generation (RAG) chatbot built using Python, LangGraph, Pinecone, Google Gemini, FastAPI, and Streamlit.
 
-The chatbot uses the Agentic AI ebook as its knowledge source and answers questions only from retrieved document context.
+The chatbot uses the Agentic AI ebook as its knowledge source and answers questions only from relevant retrieved document context. Out-of-context questions are rejected instead of being answered using outside knowledge.
 
 ## 🚀 Live Demo
 
 **Streamlit App:**  
 https://agentic-ai-rag-chatbot-a2j4fnxdrwjwxwvw3abrue.streamlit.app/
 
-## Features
+## ✨ Features
 
-- PDF document ingestion
+- PDF document ingestion using PyPDF
 - Text chunking with overlapping chunks
 - Gemini-based text embeddings
 - Pinecone vector storage and similarity search
 - LangGraph-based RAG workflow
-- Strict document-grounded generation
+- Top-4 relevant chunk retrieval
+- Retrieval similarity scoring
 - Relevance threshold for out-of-context questions
+- Strict document-grounded generation
 - Gemini-powered answer generation
 - FastAPI REST API
+- Swagger API documentation
 - Streamlit chat interface
-- Retrieved source chunks displayed in the UI
-- Retrieval similarity score
+- Retrieved source chunks and metadata
 - Out-of-context question handling
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - Python 3.11
 - LangChain
@@ -37,24 +39,17 @@ https://agentic-ai-rag-chatbot-a2j4fnxdrwjwxwvw3abrue.streamlit.app/
 - PyPDF
 - python-dotenv
 
-## Models
+## 🤖 Models
 
-### Embedding Model
-
+**Embedding Model**
 ```text
 gemini-embedding-2
-Embedding dimension: 1536
-```
+Dimension: 1536
 
-### Generation Model
+Generation Model
 
-```text
 gemini-2.5-flash
-```
-
-## Project Structure
-
-```text
+📂 Project Structure
 rag-agentic-ai/
 │
 ├── data/
@@ -74,49 +69,29 @@ rag-agentic-ai/
 ├── .env.example
 ├── .gitignore
 └── README.md
-```
-
-## RAG Architecture
-
-The deployed Streamlit application follows this workflow:
-
-```text
+🏗️ RAG Architecture
 User Question
-      │
-      ▼
-Streamlit Frontend
-      │
-      ▼
+      ↓
+Streamlit / FastAPI
+      ↓
 LangGraph
-      │
-      ▼
-Retrieve from Pinecone
-      │
-      ▼
-Relevant Document Chunks
-      │
-      ▼
+      ↓
+Pinecone Vector Search
+      ↓
+Top Relevant Document Chunks
+      ↓
 Relevance Check
-      │
-      ├── Low relevance
-      │       ↓
-      │   Refuse to answer
-      │
-      └── Relevant
-              ↓
-        Gemini Generation
-              │
-              ▼
-          Final Answer
-```
-
-FastAPI is also provided as a separate REST API through `app.py`.
-
-## LangGraph Workflow
-
-The LangGraph workflow contains two main nodes:
-
-```text
+      ↓
+   ┌───────────────┐
+   │               │
+Low Relevance   Relevant
+   │               │
+   ↓               ↓
+Refuse          Gemini
+Answer          Generation
+                   ↓
+              Final Answer
+🔄 LangGraph Workflow
 START
   ↓
 Retrieve
@@ -124,292 +99,326 @@ Retrieve
 Generate
   ↓
 END
-```
+Retrieve Node
+Receives the user's question
+Searches the Pinecone vector index
+Retrieves the top 4 relevant chunks
+Calculates similarity scores
+Passes retrieved context to the generation node
+Generate Node
+Checks retrieval relevance
+Rejects low-relevance questions
+Sends only retrieved document context to Gemini
+Generates a grounded answer
+Does not use outside knowledge
 
-### Retrieve Node
+Relevance Threshold:
 
-The retrieve node:
-
-- Receives the user's question.
-- Searches the Pinecone vector index.
-- Retrieves the top 4 relevant chunks.
-- Calculates the highest similarity score.
-- Passes the retrieved context to the generation node.
-
-### Generate Node
-
-The generate node:
-
-- Checks the retrieval similarity score.
-- Rejects questions below the relevance threshold.
-- Sends only the retrieved document context to Gemini.
-- Generates an answer using the supplied context.
-- Does not use outside knowledge.
-
-The current relevance threshold is:
-
-```text
 0.70
-```
+🎯 Groundedness and Relevance
 
-## Pinecone Configuration
+The system uses the Pinecone similarity score as a retrieval-confidence signal.
 
-The project uses the following Pinecone index configuration:
+If the highest retrieved score is below 0.70, the system returns:
 
-```text
+I don't have enough information in the provided document to answer that question.
+
+When the retrieved context is relevant, Gemini receives only the retrieved document context.
+
+The generation prompt instructs the model to:
+
+Use only retrieved context
+Avoid outside knowledge
+Avoid unsupported information
+Avoid inventing facts
+Answer using the closest clearly supported concept
+Refuse when the context is insufficient
+🗄️ Pinecone Configuration
 Index Name: agentic-ai-gemini
 Dimension: 1536
 Metric: cosine
-```
+Top-K: 4
+📄 Data Ingestion
 
-## Data Ingestion
+The Agentic AI ebook is processed using PyPDF.
 
-The Agentic AI ebook is loaded using PyPDF and split into overlapping chunks.
-
-Configuration:
-
-```text
-Chunk Size: 1000
-Chunk Overlap: 200
-```
-
-The ingestion process:
-
-```text
 PDF
  ↓
-PyPDFLoader
+PyPDF
+ ↓
+Text Extraction
  ↓
 Text Splitting
  ↓
 Gemini Embeddings
  ↓
-1536-dimensional vectors
+1536-Dimensional Vectors
  ↓
 Pinecone
-```
 
-To run ingestion:
+Configuration:
 
-```bash
+Chunk Size: 1000
+Chunk Overlap: 200
+
+Completed ingestion:
+
+Pages: 60
+Chunks: 119
+Embeddings: 119
+Dimension: 1536
+
+Run ingestion:
+
 python -m src.ingestion
-```
+🔐 Environment Variables
 
-The completed ingestion produced:
+Create a .env file in the project root:
 
-- 60 pages
-- 119 chunks
-- 119 embeddings
-- 1536 dimensions
-
-## Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
 PINECONE_API_KEY=your_pinecone_api_key
 PINECONE_INDEX_NAME=agentic-ai-gemini
 GEMINI_API_KEY=your_gemini_api_key
-```
 
-Never commit the `.env` file or API keys to GitHub.
+Never commit .env or real API keys to GitHub.
 
 For Streamlit Community Cloud, configure these values in the application's Secrets settings.
 
-## Installation
+💻 Installation
 
-Create and activate a virtual environment:
+Clone the repository:
 
-```powershell
+git clone https://github.com/vagesh10/agentic-ai-rag-chatbot.git
+cd agentic-ai-rag-chatbot
+
+Create a Python 3.11 virtual environment:
+
 py -3.11 -m venv venv
 .\venv\Scripts\Activate.ps1
-```
 
 Install dependencies:
 
-```bash
 pip install -r requirements.txt
-```
 
 Verify dependencies:
 
-```bash
 pip check
-```
-
-## Running the Backend
-
-Start FastAPI:
-
-```bash
+🚀 Run FastAPI
 uvicorn app:app --reload
-```
 
-The API will run at:
+API:
 
-```text
 http://127.0.0.1:8000
-```
 
-FastAPI documentation:
+Swagger documentation:
 
-```text
 http://127.0.0.1:8000/docs
-```
-
-## Running the Frontend
-
-Activate the virtual environment:
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-Start Streamlit:
-
-```bash
+🌐 Run Streamlit
 streamlit run frontend.py
-```
-
-The Streamlit application will open in the browser.
-
-## API Endpoint
-
-### POST `/chat`
+🔌 API Endpoint
+POST /chat
 
 Request:
 
-```json
 {
   "question": "What is Agentic AI?"
 }
-```
 
 Response:
 
-```json
 {
-  "answer": "Agentic AI refers to systems capable of autonomous decision-making and action in pursuit of specific objectives.",
-  "retrieved_chunks": [
+  "query": "What is Agentic AI?",
+  "final_answer": "Agentic AI provides a practical framework for leveraging interconnected AI systems capable of autonomous decision-making...",
+  "retrieved_context_chunks": [
     {
       "content": "Retrieved document content...",
-      "metadata": {},
-      "score": 0.8495
+      "metadata": {
+        "page": 10,
+        "source": "data/Ebook-Agentic-AI.pdf"
+      },
+      "score": 0.8123
     }
   ],
-  "confidence_score": 0.8495
+  "confidence_score": 0.8123
 }
-```
+🧪 Validation
 
-The actual response contains the retrieved document chunks.
+The chatbot was tested using six validation queries.
 
-## Sample Queries
+1. Agentic AI Definition
 
-The project was tested using the following queries:
+Question:
 
-1. What is Agentic AI?
-2. What is the role of memory in Agentic AI?
-3. How do AI agents differ from traditional automation systems?
-4. What are the core components of an Agentic Architecture?
-5. Who won the 2022 FIFA World Cup?
+What is the core definition of Agentic AI as outlined in the eBook?
 
-## Validation
+Result: PASS
+Confidence: 0.8123
 
-### 1. In-Context Query — Agentic AI
+2. Agentic Architecture
 
-**Question:**
+Question:
 
-```text
-What is Agentic AI?
-```
+What are the main architectural components required to build agentic systems?
 
-**Result:**
+Result: PASS
+Confidence: 0.8018
 
-Grounded answer generated successfully.
+3. Industry Use Cases
 
-**Similarity score:** `0.8495`
+Question:
 
-### 2. In-Context Query — Memory
+What real-world industry use cases for Agentic AI are discussed in the eBook?
 
-**Question:**
+Result: PASS
+Confidence: 0.7917
 
-```text
-What is the role of memory in Agentic AI?
-```
+4. Agentic AI vs Traditional Generative AI Chatbots
 
-**Result:**
+Question:
 
-Grounded answer generated successfully.
+How does Agentic AI differ from traditional generative AI chatbots according to the text?
 
-**Similarity score:** `0.7869`
+Result: PASS
+Confidence: 0.7895
 
-### 3. In-Context Query — Agents vs Traditional Automation
+The retrieved context describes Agentic AI as autonomous, goal-oriented, proactive, adaptive, and impact-focused. Other AI systems are described as output-focused, reactive, and static.
 
-**Question:**
+5. Challenges and Limitations
 
-```text
-How do AI agents differ from traditional automation systems?
-```
+Question:
 
-**Result:**
+What key challenges or limitations of Agentic AI are mentioned in the document?
 
-Grounded answer generated successfully.
+Result: PASS
+Confidence: 0.7875
 
-**Similarity score:** `0.7684`
+The retrieved content discusses communication and coordination, interoperability, conflict management, agent selection, scalability, and fault tolerance.
 
-### 4. In-Context Query — Core Components
+6. Out-of-Context Question
 
-**Question:**
+Question:
 
-```text
-What are the core components of an Agentic Architecture?
-```
+What is the capital of France?
 
-**Result:**
+Result: PASS — Correctly Refused
+Confidence: 0.5472
 
-Grounded answer generated successfully.
+Response:
 
-**Similarity score:** `0.8006`
-
-### 5. Out-of-Context Query
-
-**Question:**
-
-```text
-Who won the 2022 FIFA World Cup?
-```
-
-**Result:**
-
-```text
 I don't have enough information in the provided document to answer that question.
-```
 
-**Similarity score:** `0.5276`
+Since the score is below the 0.70 relevance threshold, the system does not generate an answer using outside knowledge.
 
-Because the score is below the `0.70` relevance threshold, the system refuses to generate an answer using outside knowledge.
-
-## Output
+📊 Validation Summary
+Test	Type	Result	Confidence
+Agentic AI definition	In-context	PASS	0.8123
+Agentic architecture	In-context	PASS	0.8018
+Industry use cases	In-context	PASS	0.7917
+Agentic AI vs traditional chatbots	In-context	PASS	0.7895
+Challenges and limitations	In-context	PASS	0.7875
+Capital of France	Out-of-context	PASS - Refused	0.5472
+📤 Output
 
 The application provides:
 
-- Final answer
-- Retrieved document chunks
-- Source page information
-- Individual chunk similarity scores
-- Overall retrieval similarity score
+Original query
+Final answer
+Retrieved document chunks
+Source page information
+Source metadata
+Individual similarity scores
+Overall retrieval similarity score
+Out-of-context refusal
+🔍 Retrieval Confidence
 
-## Security
+The confidence_score represents the highest Pinecone similarity score among the retrieved chunks.
 
-- API keys are loaded through environment variables.
-- The `.env` file is excluded from Git using `.gitignore`.
-- Example environment configuration is provided in `.env.example`.
-- Real API keys are never stored in the repository.
+It is used as a retrieval relevance signal and should not be interpreted as a guaranteed probability that the generated answer is factually correct.
 
-## Assignment Context
+🔐 Security
+API keys are loaded through environment variables.
+.env is excluded using .gitignore.
+.env.example contains placeholder values.
+Real API keys are not stored in the repository.
+API keys should never be committed to GitHub.
+Streamlit secrets are configured through deployment settings.
+📚 Knowledge Source
 
-This project was developed as part of a technical recruitment assignment for a Data Engineering role.
+The chatbot uses:
 
-## License
+Ebook-Agentic-AI.pdf
 
-This project was created as part of a technical recruitment assignment.
+as its knowledge source.
+
+The document is processed, chunked, embedded using Gemini, and stored in Pinecone.
+
+🎯 Assignment Context
+
+This project was developed as part of an AI Engineer technical assessment focused on building a document-grounded RAG chatbot using:
+
+LangGraph
+Pinecone
+Vector embeddings
+Document retrieval
+LLM-based generation
+Agentic AI ebook as the knowledge source
+
+The implementation provides both a REST API and an interactive Streamlit interface.
+
+📌 Key Design Decisions
+Pinecone
+
+Used for vector storage and semantic similarity search.
+
+LangGraph
+
+Used to define the RAG workflow as a stateful graph containing retrieval and generation steps.
+
+Google Gemini
+
+Used for document embeddings and final answer generation.
+
+FastAPI
+
+Used to expose the RAG pipeline through a REST API.
+
+Streamlit
+
+Used to provide an interactive chatbot interface.
+
+🔄 End-to-End Flow
+Agentic AI Ebook
+       ↓
+PDF Loader
+       ↓
+Text Chunking
+       ↓
+Gemini Embeddings
+       ↓
+Pinecone Vector DB
+       ↓
+User Question
+       ↓
+LangGraph
+       ↓
+Similarity Search
+       ↓
+Top 4 Chunks
+       ↓
+Relevance Check
+       ↓
+Gemini 2.5 Flash
+       ↓
+Grounded Final Answer
+✅ Final Validation Status
+
+All six validation scenarios passed:
+
+[PASS] Agentic AI definition
+[PASS] Agentic architecture
+[PASS] Industry use cases
+[PASS] Agentic AI vs traditional chatbots
+[PASS] Challenges and limitations
+[PASS] Out-of-context question refusal
+📄 License
+
+This project was created as part of a technical recruitment assignment and is intended for evaluation and demonstration purposes.
